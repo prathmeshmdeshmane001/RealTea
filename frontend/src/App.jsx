@@ -17,6 +17,8 @@ export default function App() {
   const [isReindexing, setIsReindexing] = useState(false);
   const [notification, setNotification] = useState(null);
 
+  const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+
   const showNotification = (msg, type = 'info') => {
     setNotification({ msg, type });
     setTimeout(() => setNotification(null), 4000);
@@ -24,7 +26,7 @@ export default function App() {
 
   const fetchHealth = async () => {
     try {
-      const res = await fetch('/api/health');
+      const res = await fetch(`${API_BASE}/api/health`);
       if (res.ok) {
         const data = await res.json();
         setHealth(data);
@@ -36,7 +38,7 @@ export default function App() {
 
   const fetchConfig = async () => {
     try {
-      const res = await fetch('/api/config');
+      const res = await fetch(`${API_BASE}/api/config`);
       if (res.ok) {
         const data = await res.json();
         setConfig(data);
@@ -48,7 +50,7 @@ export default function App() {
 
   const fetchDocuments = async () => {
     try {
-      const res = await fetch('/api/documents');
+      const res = await fetch(`${API_BASE}/api/documents`);
       if (res.ok) {
         const data = await res.json();
         setDocData(data);
@@ -70,7 +72,7 @@ export default function App() {
     setIsRunning(true);
     setTrace(null);
     try {
-      const res = await fetch('/api/crag/query', {
+      const res = await fetch(`${API_BASE}/api/crag/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(queryParams)
@@ -95,7 +97,7 @@ export default function App() {
   const handleReindex = async () => {
     setIsReindexing(true);
     try {
-      const res = await fetch('/api/documents/reindex', { method: 'POST' });
+      const res = await fetch(`${API_BASE}/api/documents/reindex`, { method: 'POST' });
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.detail || 'Reindexing failed');

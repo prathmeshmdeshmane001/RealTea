@@ -131,6 +131,7 @@ Detailed guides are available in the [`docs/`](docs/) directory:
 | :--- | :--- |
 | 📐 [**Architecture Blueprint**](docs/architecture.md) | LangGraph StateGraph design, state schema, chunking strategy, and multi-provider design. |
 | 🛠️ [**Setup & Installation Guide**](docs/setup.md) | Prerequisites, virtual environment, frontend build, manual dev mode, and troubleshooting. |
+| 🌐 [**Deployment Guide**](docs/deployment.md) | Netlify frontend CI/CD setup, Render / Docker backend deployment, and environment variables. |
 | 🔌 [**REST API Reference**](docs/api.md) | Full endpoint documentation, request/response schemas, status codes, and `curl` examples. |
 | 📑 [**Research Paper Summary**](docs/paper_summary.md) | Comprehensive technical analysis of the CRAG paper (arXiv:2401.15884v3) and algorithm mapping. |
 
@@ -142,7 +143,9 @@ Detailed guides are available in the [`docs/`](docs/) directory:
 RealTea/
 ├── .env.example             # Environment variable template
 ├── .gitignore               # Excludes secrets, node_modules, .venv, dist/
+├── Dockerfile               # Production Docker container definition for backend
 ├── LICENSE                  # MIT Open Source License
+├── netlify.toml             # Netlify build configuration & SPA redirects
 ├── README.md                # Repository overview and quickstart
 ├── requirements.txt         # Python dependencies (FastAPI, LangGraph, FAISS)
 ├── start.sh                 # One-click startup script (venv, build, launch)

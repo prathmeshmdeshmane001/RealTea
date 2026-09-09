@@ -1,0 +1,23 @@
+# Netlify Configuration for RealTea Studio
+
+[build]
+  base = "frontend"
+  publish = "dist"
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Optional: To proxy API requests through Netlify to your deployed backend,
+# uncomment and set your backend service URL:
+# [[redirects]]
+#   from = "/api/*"
+#   to = "https://your-backend-app.onrender.com/api/:splat"
+#   status = 200
+#   force = true
+
+# SPA client-side routing fallback
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
