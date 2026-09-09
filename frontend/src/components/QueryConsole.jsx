@@ -37,9 +37,9 @@ export default function QueryConsole({ onExecute, isRunning, config }) {
     <div className="nokta-card rounded-3xl p-6 sm:p-8 space-y-6">
       {/* Editorial Header inspired by Nokta */}
       <div className="space-y-2">
-        <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full border border-neutral-800 bg-neutral-900/60 text-[11px] font-mono tracking-wider text-neutral-400">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-          <span>CORRECTIVE RAG PIPELINE</span>
+        <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full border border-neutral-800 bg-neutral-900/60 text-[11px] font-mono tracking-wider text-neutral-300">
+          <img src="/logo-badge.png" alt="RealTea" className="w-4 h-4 rounded-full object-contain" />
+          <span>CORRECTIVE RAG ENGINE</span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white">
           Get the real tea from your knowledge base.

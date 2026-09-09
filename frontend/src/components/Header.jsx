@@ -25,9 +25,11 @@ export default function Header({ health, activeTab, setActiveTab }) {
       <div className="nokta-pill-nav rounded-full px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3">
         {/* Brand & Editorial Mark */}
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center font-bold text-sm shadow-inner shrink-0">
-            <span className="tracking-tighter">RT</span>
-          </div>
+          <img 
+            src="/logo-badge.png" 
+            alt="RealTea Logo" 
+            className="w-8 h-8 rounded-full shadow-sm shrink-0 object-contain ring-1 ring-white/20 hover:scale-105 transition-transform" 
+          />
           <div className="flex items-baseline space-x-2">
             <span className="text-base font-semibold tracking-tight text-white">
               RealTea

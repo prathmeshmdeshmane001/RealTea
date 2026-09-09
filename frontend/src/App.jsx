@@ -182,7 +182,8 @@ export default function App() {
       {/* Footer (Nokta Minimalist) */}
       <footer className="border-t border-neutral-800/80 bg-[#0b0c0e] py-6 text-xs text-neutral-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2.5">
+            <img src="/logo-badge.png" alt="RealTea" className="w-4 h-4 rounded-full object-contain shrink-0" />
             <span className="text-white font-medium">RealTea</span>
             <span>•</span>
             <span>Minimal Corrective RAG Platform</span>

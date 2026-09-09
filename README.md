@@ -1,4 +1,6 @@
-# RealTea — Corrective RAG (CRAG) Platform
+<p align="center">
+  <img src="docs/assets/logo.png" alt="RealTea — Corrective RAG Engine" width="380" />
+</p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Architecture-Corrective_RAG_(CRAG)-10b981?style=for-the-badge" alt="CRAG Architecture" />
