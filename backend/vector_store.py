@@ -84,7 +84,7 @@ class GeminiEmbeddings(Embeddings):
         return res.embeddings[0].values
 
 _cached_embeddings: Optional[Embeddings] = None
-_openai_quota_failed: bool = False
+_openai_quota_failed: bool = True
 
 def get_embeddings() -> Embeddings:
     global _cached_embeddings, _openai_quota_failed

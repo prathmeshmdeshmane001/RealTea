@@ -15,7 +15,7 @@ from backend.models import (
 from backend.vector_store import (
     get_or_create_vector_store, get_document_stats, get_indexed_chunks_count
 )
-from backend.crag_engine import run_crag_pipeline
+from backend.crag_engine import run_crag_pipeline, get_gemini_client
 
 app = FastAPI(
     title="RealTea Studio API",
@@ -31,6 +31,19 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.on_event("startup")
+def startup_event():
+    """Pre-warm the vector store and HTTP client to eliminate cold-start latency on first user query."""
+    try:
+        get_or_create_vector_store()
+    except Exception as e:
+        print(f"[Warning] Failed to pre-warm vector store: {e}")
+    try:
+        get_gemini_client()
+    except Exception as e:
+        print(f"[Warning] Failed to pre-warm Gemini client: {e}")
+
 
 @app.get("/api/health", response_model=HealthResponse)
 def health_check():
