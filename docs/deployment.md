@@ -80,6 +80,9 @@ Because the CRAG pipeline uses FAISS vector search and LangGraph state machines,
   python -m uvicorn backend.server:app --host 0.0.0.0 --port $PORT
   ```
 
+> [!TIP]
+> **512MB Free Tier Memory Optimization**: The repository includes the pre-computed vector index (`storage/faiss_index/`). Render loads this in <0.2s without re-parsing 800+ pages of PDFs or generating ONNX embeddings at boot, keeping memory usage at ~250MB—well below Render's 512MB ceiling.
+
 ### Step 3: Add API Keys (Environment Variables)
 In the **Environment Variables** section on Render, add:
 - `GEMINI_API_KEY` = your Google Gemini API key

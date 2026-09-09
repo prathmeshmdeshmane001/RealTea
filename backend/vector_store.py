@@ -18,40 +18,22 @@ _vector_store: Optional[FAISS] = None
 _indexed_chunks_count: int = 0
 
 class FastEmbeddingsWrapper(Embeddings):
-    """High-speed local direct ONNX embeddings without cloud quota limits or fork issues."""
+    """High-speed local direct ONNX embeddings optimized for low-memory cloud hosts."""
     def __init__(self, model_name: str = "BAAI/bge-small-en-v1.5"):
         from fastembed import TextEmbedding
-        self.fast = TextEmbedding(model_name=model_name)
-        self.tokenizer = self.fast.model.tokenizer
-        self.model = self.fast.model.model
-        self.input_names = [i.name for i in self.model.get_inputs()]
-
-    def _embed_batch(self, texts: List[str]) -> List[List[float]]:
-        encoded = self.tokenizer.encode_batch(texts)
-        input_ids = np.array([e.ids for e in encoded], dtype=np.int64)
-        attention_mask = np.array([e.attention_mask for e in encoded], dtype=np.int64)
-        inputs = {'input_ids': input_ids, 'attention_mask': attention_mask}
-        if 'token_type_ids' in self.input_names:
-            inputs['token_type_ids'] = np.zeros_like(input_ids)
-        out = self.model.run(None, inputs)
-        # BGE models use normalized CLS pooling
-        emb = out[0][:, 0]
-        norm = np.linalg.norm(emb, axis=1, keepdims=True)
-        emb = emb / np.maximum(norm, 1e-9)
-        return emb.tolist()
+        # Single thread keeps ONNX memory footprint minimal within 512MB RAM constraints
+        self.fast = TextEmbedding(model_name=model_name, threads=1)
 
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
         results: List[List[float]] = []
-        batch_size = 128
-        print(f"Generating local embeddings for {len(texts)} chunks in batches of {batch_size}...")
+        batch_size = 32
         for i in range(0, len(texts), batch_size):
             batch = texts[i:i + batch_size]
-            results.extend(self._embed_batch(batch))
-            print(f"  [Embeddings] Progress: {min(i + batch_size, len(texts))}/{len(texts)} chunks indexed")
+            results.extend([e.tolist() for e in self.fast.embed(batch)])
         return results
 
     def embed_query(self, text: str) -> List[float]:
-        return self._embed_batch([text])[0]
+        return list(self.fast.embed([text]))[0].tolist()
 
 class GeminiEmbeddings(Embeddings):
     """Resilient batch embedding client using Google Gemini API."""
@@ -135,6 +117,10 @@ def load_and_chunk_documents() -> Tuple[List[Document], List[DocStat]]:
             continue
 
         file_chunks = splitter.split_documents(docs)
+        del docs
+        import gc
+        gc.collect()
+
         for d in file_chunks:
             d.page_content = d.page_content.encode("utf-8", "ignore").decode("utf-8", "ignore")
             if "source" not in d.metadata:
@@ -144,7 +130,7 @@ def load_and_chunk_documents() -> Tuple[List[Document], List[DocStat]]:
         stats.append(DocStat(
             filename=p.name,
             size_bytes=p.stat().st_size,
-            page_count=len(docs),
+            page_count=len(file_chunks),
             chunks_count=len(file_chunks)
         ))
 

@@ -35,11 +35,8 @@ wheels/
 .coverage
 htmlcov/
 
-# Local FAISS index and persistent cache
-storage/faiss_index/
+# Local persistent cache (FAISS index is tracked for fast cloud startup under 512MB RAM)
 storage/cache/
-*.faiss
-*.pkl
 
 # Node & Frontend dependencies and build outputs
 node_modules/
