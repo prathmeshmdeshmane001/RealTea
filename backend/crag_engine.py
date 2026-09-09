@@ -295,17 +295,68 @@ def route_after_eval(state: State) -> str:
         return "refine"
     else:
         return "rewrite_query"
+# -----------------------------
+# Robust Tavily Web Search (Subprocess curl + httpx fallback)
+# -----------------------------
+def search_tavily(query: str, max_results: int = 5) -> List[Dict[str, Any]]:
+    """Fetches web search results reliably, utilizing curl subprocess to prevent macOS Python TLS ConnectionResetError."""
+    if not TAVILY_API_KEY:
+        return []
+
+    # 1. Primary: curl subprocess (immune to Python urllib3 TLS handshake drops on macOS)
+    try:
+        import subprocess
+        cmd = [
+            "curl", "-s", "-m", "12", "-X", "POST", "https://api.tavily.com/search",
+            "-H", "Content-Type: application/json",
+            "-d", json.dumps({"api_key": TAVILY_API_KEY, "query": query, "max_results": max_results})
+        ]
+        res = subprocess.run(cmd, capture_output=True, text=True)
+        if res.returncode == 0 and res.stdout:
+            data = json.loads(res.stdout)
+            results = data.get("results", [])
+            if results:
+                return results
+    except Exception as e:
+        print(f"[Tavily curl method error: {e}]")
+
+    # 2. Fallback: httpx
+    try:
+        with httpx.Client(timeout=10.0, http2=False) as client:
+            resp = client.post(
+                "https://api.tavily.com/search",
+                json={"api_key": TAVILY_API_KEY, "query": query, "max_results": max_results}
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                results = data.get("results", [])
+                if results:
+                    return results
+    except Exception as e:
+        print(f"[Tavily httpx fallback error: {e}]")
+
+    # 3. Fallback: TavilyClient SDK
+    try:
+        from tavily import TavilyClient
+        tavily = TavilyClient(api_key=TAVILY_API_KEY)
+        data = tavily.search(query=query, max_results=max_results)
+        return data.get("results", [])
+    except Exception as e:
+        print(f"[Tavily SDK fallback error: {e}]")
+
+    return []
 
 def rewrite_query_node(state: State) -> Dict[str, Any]:
     q = state["question"]
     provider = state.get("provider", "gemini")
 
     system_prompt = (
-        "Rewrite the user question into a web search query composed of keywords.\n"
-        "Rules:\n"
-        "- Keep it short (6–14 words).\n"
-        "- If the question implies recency (e.g., recent/latest/last week/last month), add a constraint like (last 30 days).\n"
-        "- Do NOT answer the question."
+        "You are a web search query reformulation engine.\n"
+        "Extract the core factual entities, product names, technologies, and topics from the user's question into a concise keyword search query (3 to 8 words).\n"
+        "Focus strictly on finding the facts or news needed (e.g. entity name, release, capabilities, specs).\n"
+        "Strip away conversational framing like 'if you were the PM', 'what would you build', 'explain to me', or 'can you tell me'.\n"
+        "If recency or latest release is mentioned or implied, add '(last 30 days)' or 'latest announcement'.\n"
+        "Do NOT answer the question. Return ONLY the search query."
     )
     human_prompt = f"Question: {q}"
 
@@ -323,10 +374,8 @@ def web_search_node(state: State) -> Dict[str, Any]:
     web_docs: List[Document] = []
 
     try:
-        from tavily import TavilyClient
-        tavily = TavilyClient(api_key=TAVILY_API_KEY)
-        results = tavily.search(query=q, max_results=5)
-        for r in results.get("results", []):
+        results = search_tavily(query=q, max_results=5)
+        for r in results:
             title = r.get("title", "Web Result")
             url = r.get("url", "")
             content = r.get("content", "")
@@ -354,10 +403,10 @@ def refine(state: State) -> Dict[str, Any]:
     strips = decompose_to_sentences(context)
 
     # Filter strips using single structured batch call
-    eval_strips = strips[:12] if len(strips) > 12 else strips
+    eval_strips = strips[:15] if len(strips) > 15 else strips
     system_prompt = (
-        "You are a strict relevance filter for RAG.\n"
-        "Given candidate sentences numbered 0 to N-1, return kept_indices: list of integer indices for sentences that directly help answer the question."
+        "You are a relevance filter for RAG.\n"
+        "Given candidate sentences numbered 0 to N-1, return kept_indices: list of integer indices for sentences that contain useful facts, capabilities, definitions, or context related to the question."
     )
     formatted_strips = "\n".join(f"[{i}]: {s}" for i, s in enumerate(eval_strips))
     human_prompt = f"Question: {q}\n\nSentences:\n{formatted_strips}"
@@ -369,11 +418,11 @@ def refine(state: State) -> Dict[str, Any]:
             if 0 <= idx < len(eval_strips):
                 kept.append(eval_strips[idx])
     except Exception:
-        kept = eval_strips[:4]
+        kept = eval_strips[:5]
 
-    # Fallback if all dropped
+    # Fallback if all dropped or filter dropped everything
     if not kept and strips:
-        kept = strips[:2]
+        kept = strips[:5]
 
     refined_context = "\n".join(kept).strip()
     exec_path = state.get("execution_path", []) + ["refine"]
@@ -391,9 +440,11 @@ def generate(state: State) -> Dict[str, Any]:
     refined_context = state.get("refined_context", "")
 
     system_prompt = (
-        "You are a helpful ML tutor. Answer ONLY using the provided context.\n"
-        "If the context is empty or insufficient, say: 'I don't know.'\n"
-        "Provide a clear, well-structured, educational explanation."
+        "You are an expert AI Product Manager and ML tutor.\n"
+        "Ground your response in the verified facts and technical capabilities from the provided context.\n"
+        "If the user asks an analytical, strategic, or product question, use the technical capabilities, features, and context as the concrete foundation for your answer.\n"
+        "If the context is completely empty and no information is available, say: 'I don't know.'\n"
+        "Provide a clear, well-structured, insightful explanation."
     )
     human_prompt = f"Question: {q}\n\nRefined Context:\n{refined_context}"
 
