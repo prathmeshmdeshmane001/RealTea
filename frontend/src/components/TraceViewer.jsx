@@ -3,6 +3,7 @@ import {
   FileText, CheckCircle2, AlertTriangle, XCircle, Globe, Filter, 
   Code, ExternalLink, Sparkles, Check, X, BookOpen, Clock, Zap
 } from 'lucide-react';
+import MarkdownRenderer from './MarkdownRenderer';
 
 export default function TraceViewer({ trace, isRunning }) {
   const [activeTab, setActiveTab] = useState('answer');
@@ -189,8 +190,8 @@ export default function TraceViewer({ trace, isRunning }) {
               </div>
             </div>
             
-            <div className="text-neutral-100 leading-relaxed text-sm whitespace-pre-wrap font-sans bg-neutral-950/60 p-6 rounded-2xl border border-neutral-800/80">
-              {answer || "No response generated."}
+            <div className="text-neutral-100 leading-relaxed text-sm font-sans bg-neutral-950/60 p-6 sm:p-7 rounded-2xl border border-neutral-800/80">
+              <MarkdownRenderer content={answer} />
             </div>
 
             {/* Grounding Context Snippet */}
